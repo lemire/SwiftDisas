@@ -16,8 +16,7 @@ if(len(sys.argv)<3):
     sys.exit("usage: swiftdisas.py binary function")
 
 def demangle(name) :
-  pipe = subprocess.Popen(["swift", "demangle", "-compact", name], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-  return pipe.communicate()[0].decode()
+   return subprocess.check_output(["swift", "demangle", "-compact", name]).strip()
 
 
 mybinary = sys.argv[1]
@@ -41,23 +40,27 @@ while (x < len(res)):
                 l = res[x + 1]
                 x = x + 1
                 m = re.search("\s*Summary:.*`(.*)Address:.*\[(.*)\]",l)
-                fncname = m.group(1)
+                fncname = m.group(1).strip()
                 address = m.group(2)
-                answer[fncname] = address
+                answer[fncname] = address.strip()
             elif(re.match("\s*Summary:.*",res[x+1])):
                 l = res[x + 1]
                 x = x + 1
                 m = re.search("\s*Summary:.*`(.*)",l)
-                fncname = m.group(1)
+                fncname = m.group(1).strip()
             elif (re.match("\s*Address:.*",res[x+1])):
                 l = res[x + 1]
                 x = x + 1
             else:
                 break
     x = x + 1
-
+catalog = set()
+if(len(answer) == 0): print("cannot find anything matching the requested function.")
 for name in answer:
     print("function: "+demangle(name))
+    if(answer[name] in catalog): 
+       print("duplicate address")
+    catalog.add(answer[name])
     pipe = subprocess.Popen(["lldb", "--batch", mybinary, "-o" , "disas -m -a "+answer[name]+" "], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     res = pipe.communicate()[0].decode().split("\n")
     p = False
@@ -65,5 +68,7 @@ for name in answer:
         if(p):
             print(line)
         if(re.search("disas -m -a",line)):
+            print("======")
             p = True
-    print()
+    print("======")
+    print("")
