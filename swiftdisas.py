@@ -33,6 +33,7 @@ x = 0
 answer = {}
 while (x < len(res)):
     l = res[x]
+    address = ""
     if(re.match(".*symbols.*"+mybinary+".*",l)):
         count = int(re.search("(\d+)\ssymbols",l).group(1))
         while((x + 1 < len(res))):
@@ -41,15 +42,21 @@ while (x < len(res)):
                 x = x + 1
                 m = re.search("\s*Summary:.*`(.*)Address:.*\[(.*)\]",l)
                 fncname = m.group(1).strip()
-                address = m.group(2)
-                answer[fncname] = address.strip()
+                address = m.group(2).strip()
+                answer[fncname] = address
+                address = ""
             elif(re.match("\s*Summary:.*",res[x+1])):
                 l = res[x + 1]
                 x = x + 1
                 m = re.search("\s*Summary:.*`(.*)",l)
                 fncname = m.group(1).strip()
+                if(len(address)>0):
+                   answer[fncname] = address
+                   address = ""
             elif (re.match("\s*Address:.*",res[x+1])):
                 l = res[x + 1]
+                m = re.search("Address:.*\[(.*)\]",l)
+                address = m.group(1).strip()
                 x = x + 1
             else:
                 break
